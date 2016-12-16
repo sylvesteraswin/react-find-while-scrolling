@@ -26,7 +26,7 @@ class FindWhileScrolling extends Component {
             ? PropTypes.instanceOf(Element)
             : PropTypes.any,
         children: PropTypes.element,
-        minimumTop: PropTypes.number,
+        minimumGutter: PropTypes.number,
         killAfterFind: PropTypes.bool,
         className: PropTypes.string,
     };
@@ -34,7 +34,7 @@ class FindWhileScrolling extends Component {
     static defaultProps = {
         active: true,
         peek: false,
-        minimumTop: 0,
+        minimumGutter: 0,
         intervalCheck: true,
         intervalDelay: 1000,
         scrollCheck: false,
@@ -126,7 +126,7 @@ class FindWhileScrolling extends Component {
         const {
             wrapperEl,
             peek,
-            minimumTop,
+            minimumGutter,
             onVisibleHandler,
             killAfterFind,
         } = this.props;
@@ -160,8 +160,7 @@ class FindWhileScrolling extends Component {
             right: right <= rightWrapper,
         };
 
-        let canYouSeeMe = whatYouCanSeeRect.top
-            && whatYouCanSeeRect.left
+        let canYouSeeMe = whatYouCanSeeRect.top && whatYouCanSeeRect.left
             && whatYouCanSeeRect.bottom
             && whatYouCanSeeRect.right;
 
@@ -175,8 +174,8 @@ class FindWhileScrolling extends Component {
                 peekABoo = whatYouCanSeeRect[peek];
             }
 
-            canYouSeeMe = minimumTop
-                ? peekABoo && top <= (bottomWrapper - minimumTop)
+            canYouSeeMe = minimumGutter
+                ? peekABoo && top <= (bottomWrapper - minimumGutter)
                 : peekABoo;
         }
 

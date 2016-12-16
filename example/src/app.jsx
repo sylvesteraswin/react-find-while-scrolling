@@ -20,7 +20,7 @@ class Sections extends Component {
         return (
             <div className="cf flex flex-row items-start flex-auto">
                 <FindWhileScrolling
-                    peek={'left'}
+                    peek
                     active
                     className={'w-25'}
                     wrapperEl={this.props.wrapperEl()}
@@ -30,7 +30,7 @@ class Sections extends Component {
                     </div>
                 </FindWhileScrolling>
                 <FindWhileScrolling
-                    peek={'left'}
+                    peek
                     active
                     className={'w-25'}
                     wrapperEl={this.props.wrapperEl()}
@@ -40,7 +40,7 @@ class Sections extends Component {
                     </div>
                 </FindWhileScrolling>
                 <FindWhileScrolling
-                    peek={'left'}
+                    peek
                     active
                     className={'w-25'}
                     wrapperEl={this.props.wrapperEl()}
@@ -50,7 +50,7 @@ class Sections extends Component {
                     </div>
                 </FindWhileScrolling>
                 <FindWhileScrolling
-                    peek={'left'}
+                    peek
                     active
                     className={'w-25'}
                     wrapperEl={this.props.wrapperEl()}
@@ -60,7 +60,7 @@ class Sections extends Component {
                     </div>
                 </FindWhileScrolling>
                 <FindWhileScrolling
-                    peek={'left'}
+                    peek
                     active
                     className={'w-25'}
                     wrapperEl={this.props.wrapperEl()}
@@ -90,7 +90,7 @@ class Tagline extends Component {
     render = () => {
         return (
             <FindWhileScrolling
-                active={false}
+                active
                 onVisibleHandler={this.handleVisible}>
                 <article
                     className="mt7 mw7 center ph3 ph5-ns tc br2 pv5 bg-washed-green dark-green mb5">
@@ -120,7 +120,7 @@ class Tagline extends Component {
                     </div>
                 </article>
             </FindWhileScrolling>
-        )
+        );
     };
 }
 
@@ -140,7 +140,7 @@ class Title extends Component {
     render = () => {
         return (
             <FindWhileScrolling
-                active={false}
+                active
                 onVisibleHandler={this.handleVisible}>
                 <article
                     className="pa3 pa5-ns mt7">
@@ -207,11 +207,14 @@ class App extends Component {
                     </div>
                 </div>
 
-                <a
-                    onClick={this.addWrapperEl}
-                    className="f6 link dim ph3 pv2 mb2 dib white bg-dark-blue">
-                    Add Wrapper El
-                </a>
+                <div
+                    className="pa3 tc">
+                    <a
+                        onClick={this.addWrapperEl}
+                        className="f6 link dim ph3 pv2 mb2 dib white bg-dark-blue">
+                        Add Wrapper El
+                    </a>
+                </div>
             </section>
         );
     }

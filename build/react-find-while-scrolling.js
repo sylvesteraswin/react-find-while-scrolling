@@ -201,7 +201,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var _this$props2 = _this.props,
 	                wrapperEl = _this$props2.wrapperEl,
 	                peek = _this$props2.peek,
-	                minimumTop = _this$props2.minimumTop,
+	                minimumGutter = _this$props2.minimumGutter,
 	                onVisibleHandler = _this$props2.onVisibleHandler,
 	                killAfterFind = _this$props2.killAfterFind;
 
@@ -247,7 +247,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    peekABoo = whatYouCanSeeRect[peek];
 	                }
 
-	                canYouSeeMe = minimumTop ? peekABoo && top <= bottomWrapper - minimumTop : peekABoo;
+	                canYouSeeMe = minimumGutter ? peekABoo && top <= bottomWrapper - minimumGutter : peekABoo;
 	            }
 
 	            var visible = _this.state.visible;
@@ -297,14 +297,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    intervalDelay: _react.PropTypes.number,
 	    wrapperEl: helpers.canUseDom ? _react.PropTypes.instanceOf(Element) : _react.PropTypes.any,
 	    children: _react.PropTypes.element,
-	    minimumTop: _react.PropTypes.number,
+	    minimumGutter: _react.PropTypes.number,
 	    killAfterFind: _react.PropTypes.bool,
 	    className: _react.PropTypes.string
 	};
 	FindWhileScrolling.defaultProps = {
 	    active: true,
 	    peek: false,
-	    minimumTop: 0,
+	    minimumGutter: 0,
 	    intervalCheck: true,
 	    intervalDelay: 1000,
 	    scrollCheck: false,
