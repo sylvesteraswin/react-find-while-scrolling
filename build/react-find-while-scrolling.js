@@ -72,11 +72,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _reactDom = __webpack_require__(3);
 
-	var _reactAttachHandler = __webpack_require__(4);
+	var _classnames = __webpack_require__(4);
+
+	var _classnames2 = _interopRequireDefault(_classnames);
+
+	var _reactAttachHandler = __webpack_require__(5);
 
 	var _reactAttachHandler2 = _interopRequireDefault(_reactAttachHandler);
 
-	var _helpers = __webpack_require__(5);
+	var _helpers = __webpack_require__(6);
 
 	var helpers = _interopRequireWildcard(_helpers);
 
@@ -115,6 +119,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	} // eslint-disable-line no-unused-vars
 	// eslint-disable-line no-unused-vars
 
+	// eslint-disable-line no-unused-vars
+
 	var FindWhileScrolling = function (_Component) {
 	    _inherits(FindWhileScrolling, _Component);
 
@@ -129,38 +135,62 @@ return /******/ (function(modules) { // webpackBootstrap
 	            args[_key] = arguments[_key];
 	        }
 
-	        return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = FindWhileScrolling.__proto__ || Object.getPrototypeOf(FindWhileScrolling)).call.apply(_ref, [this].concat(args))), _this), _this.componentDidMount = function () {
-	            var active = _this.props.active;
+	        return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_ref = FindWhileScrolling.__proto__ || Object.getPrototypeOf(FindWhileScrolling)).call.apply(_ref, [this].concat(args))), _this), _this.state = {
+	            active: _this.props.active,
+	            visible: false,
+	            visibleDimensions: {}
+	        }, _this.componentDidMount = function () {
+	            var active = _this.state.active;
 
 	            if (active) {
 	                _this.startFinding();
 	            }
 	        }, _this.componentWillUnmount = function () {
-	            _this.stopFinding();
+	            var intervalCheck = _this.props.intervalCheck;
+
+	            if (intervalCheck) {
+	                _this.stopFinding();
+	            }
 	        }, _this.componentWillReceiveProps = function (nextProps) {
 	            var active = nextProps.active;
 
-	            if (active) {
-	                _this.startFinding();
-	            } else {
+	            // This is the case when active was inactive and the new props have a true value
+	            // Set the state to the new props and fire startFinding
+
+	            if (active && !_this.props.active) {
+	                _this.setState({
+	                    active: active
+	                }, function () {
+	                    _this.startFinding();
+	                });
+	            } else if (!active && _this.state.active) {
 	                _this.stopFinding();
 	            }
 	        }, _this.startFinding = function () {
-	            // Only create one instance of the interval checker
-	            if (_this.findInterval) {
-	                return;
-	            }
 	            var _this$props = _this.props,
 	                intervalCheck = _this$props.intervalCheck,
-	                intervalDelay = _this$props.intervalDelay;
+	                intervalDelay = _this$props.intervalDelay,
+	                scrollCheck = _this$props.scrollCheck;
+
+	            // Only create one instance of the interval checker
+
+	            if (_this.findInterval && !scrollCheck) {
+	                return;
+	            }
 
 	            if (intervalCheck) {
 	                _this.findInterval = setInterval(_this.find, intervalDelay);
 	                // Call the function for the first time
+	                // this.find();
+	            } else if (scrollCheck) {
 	                _this.find();
 	            }
 	        }, _this.stopFinding = function () {
-	            _this.findInterval = clearInterval(_this.findInterval);
+	            var intervalCheck = _this.props.intervalCheck;
+
+	            if (intervalCheck && _this.findInterval) {
+	                _this.findInterval = clearInterval(_this.findInterval);
+	            }
 	        }, _this.find = function () {
 	            var el = (0, _reactDom.findDOMNode)(_this);
 
@@ -172,7 +202,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	                wrapperEl = _this$props2.wrapperEl,
 	                peek = _this$props2.peek,
 	                minimumTop = _this$props2.minimumTop,
-	                onVisibleHandler = _this$props2.onVisibleHandler;
+	                onVisibleHandler = _this$props2.onVisibleHandler,
+	                killAfterFind = _this$props2.killAfterFind;
 
 	            var _el$getBoundingClient = el.getBoundingClientRect(),
 	                top = _el$getBoundingClient.top,
@@ -209,20 +240,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var canYouSeeMe = whatYouCanSeeRect.top && whatYouCanSeeRect.left && whatYouCanSeeRect.bottom && whatYouCanSeeRect.right;
 
 	            if (peek) {
-	                var peekABoo = rect.top <= bottomWrapper && rect.bottom >= topWrapper && rect.left <= rightWrapper && rect.right >= leftWrapper;
+	                var peekABoo = top <= bottomWrapper && bottom >= topWrapper && left <= rightWrapper && right >= leftWrapper;
 
 	                // If peek is a string then need to find is peeking
 	                if (typeof peek === 'string') {
-	                    peekABoo = wrapperElRect[peek];
+	                    peekABoo = whatYouCanSeeRect[peek];
 	                }
 
-	                canYouSeeMe = minimumTop ? peekABoo && rect.top <= wrapperElRect.bottom - minimumTop : peekABoo;
+	                canYouSeeMe = minimumTop ? peekABoo && top <= bottomWrapper - minimumTop : peekABoo;
 	            }
 
 	            var visible = _this.state.visible;
 
 	            if (visible !== canYouSeeMe) {
-	                _this.setState({ visible: true, visibleDimensions: whatYouCanSeeRect });
+	                _this.setState({
+	                    visible: canYouSeeMe,
+	                    visibleDimensions: whatYouCanSeeRect,
+	                    active: killAfterFind ? false : _this.state.active
+	                }, function () {
+	                    _this.stopFinding();
+	                });
 
 	                if (typeof onVisibleHandler === 'function') {
 	                    onVisibleHandler(canYouSeeMe, whatYouCanSeeRect);
@@ -232,13 +269,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	            var _this$props3 = _this.props,
 	                children = _this$props3.children,
 	                scrollCheck = _this$props3.scrollCheck,
+	                className = _this$props3.className,
 	                debounce = _this$props3.scrollDebounce;
+	            var active = _this.state.active;
 
 	            var el = _react2.default.Children.only(children);
 	            return _react2.default.createElement('div', { ref: function ref(r) {
 	                    return _this.findMe = r;
-	                }, className: 'visible-traker' }, scrollCheck && _react2.default.createElement(_reactAttachHandler2.default, { target: 'window', events: {
-	                    scroll: _this.find,
+	                }, className: (0, _classnames2.default)('visible-traker', className) }, scrollCheck && active && _react2.default.createElement(_reactAttachHandler2.default, { target: 'window', events: {
+	                    scroll: _this.startFinding,
 	                    opts: {
 	                        debounce: debounce
 	                    }
@@ -256,9 +295,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    intervalCheck: _react.PropTypes.bool,
 	    scrollCheck: _react.PropTypes.bool,
 	    intervalDelay: _react.PropTypes.number,
-	    wrapperEl: typeof window !== 'undefined' ? _react.PropTypes.instanceOf(Element) : _react.PropTypes.any,
+	    wrapperEl: helpers.canUseDom ? _react.PropTypes.instanceOf(Element) : _react.PropTypes.any,
 	    children: _react.PropTypes.element,
-	    minimumTop: _react.PropTypes.number
+	    minimumTop: _react.PropTypes.number,
+	    killAfterFind: _react.PropTypes.bool,
+	    className: _react.PropTypes.string
 	};
 	FindWhileScrolling.defaultProps = {
 	    active: true,
@@ -269,11 +310,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    scrollCheck: false,
 	    scrollDebounce: 250,
 	    wrapperEl: null,
-	    children: _react2.default.createElement('span')
-	};
-	FindWhileScrolling.state = {
-	    visible: false,
-	    visibleDimensions: {}
+	    killAfterFind: true,
+	    children: _react2.default.createElement('span'),
+	    className: ''
 	};
 	exports.default = FindWhileScrolling;
 
@@ -291,6 +330,60 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
+	  Copyright (c) 2016 Jed Watson.
+	  Licensed under the MIT License (MIT), see
+	  http://jedwatson.github.io/classnames
+	*/
+	/* global define */
+
+	(function () {
+		'use strict';
+
+		var hasOwn = {}.hasOwnProperty;
+
+		function classNames () {
+			var classes = [];
+
+			for (var i = 0; i < arguments.length; i++) {
+				var arg = arguments[i];
+				if (!arg) continue;
+
+				var argType = typeof arg;
+
+				if (argType === 'string' || argType === 'number') {
+					classes.push(arg);
+				} else if (Array.isArray(arg)) {
+					classes.push(classNames.apply(null, arg));
+				} else if (argType === 'object') {
+					for (var key in arg) {
+						if (hasOwn.call(arg, key) && arg[key]) {
+							classes.push(key);
+						}
+					}
+				}
+			}
+
+			return classes.join(' ');
+		}
+
+		if (typeof module !== 'undefined' && module.exports) {
+			module.exports = classNames;
+		} else if (true) {
+			// register as 'classnames', consistent with npm package name
+			!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function () {
+				return classNames;
+			}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+		} else {
+			window.classNames = classNames;
+		}
+	}());
+
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	(function webpackUniversalModuleDefinition(root, factory) {
@@ -728,7 +821,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	;
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports) {
 
 	Object.defineProperty(exports, "__esModule", {

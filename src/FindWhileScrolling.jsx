@@ -1,9 +1,10 @@
 import React, {Component, PropTypes} from 'react'; // eslint-disable-line no-unused-vars
 import {findDOMNode} from 'react-dom';
+import cn from 'classnames';
 
 import AttachHandler from 'react-attach-handler'; // eslint-disable-line no-unused-vars
 
-import * as helpers from './helpers';
+import * as helpers from './helpers'; // eslint-disable-line no-unused-vars
 
 class FindWhileScrolling extends Component {
     static propTypes = {
@@ -11,16 +12,23 @@ class FindWhileScrolling extends Component {
         active: PropTypes.bool,
         peek: PropTypes.oneOfType([
             PropTypes.bool,
-            PropTypes.oneOf(['top', 'right', 'bottom', 'left'])
+            PropTypes.oneOf([
+                'top',
+                'right',
+                'bottom',
+                'left',
+            ]),
         ]),
         intervalCheck: PropTypes.bool,
         scrollCheck: PropTypes.bool,
         intervalDelay: PropTypes.number,
-        wrapperEl: (typeof window !== 'undefined')
+        wrapperEl: helpers.canUseDom
             ? PropTypes.instanceOf(Element)
             : PropTypes.any,
         children: PropTypes.element,
-        minimumTop: PropTypes.number
+        minimumTop: PropTypes.number,
+        killAfterFind: PropTypes.bool,
+        className: PropTypes.string,
     };
 
     static defaultProps = {
@@ -32,16 +40,19 @@ class FindWhileScrolling extends Component {
         scrollCheck: false,
         scrollDebounce: 250,
         wrapperEl: null,
-        children: React.createElement('span')
+        killAfterFind: true,
+        children: React.createElement('span'),
+        className: '',
     };
 
-    static state = {
+    state = {
+        active: this.props.active,
         visible: false,
-        visibleDimensions: {}
+        visibleDimensions: {},
     };
 
     componentDidMount = () => {
-        const {active} = this.props;
+        const {active} = this.state;
 
         if (active) {
             this.startFinding();
@@ -49,35 +60,60 @@ class FindWhileScrolling extends Component {
     };
 
     componentWillUnmount = () => {
-        this.stopFinding();
+        const {
+            intervalCheck,
+        } = this.props;
+
+        if (intervalCheck) {
+            this.stopFinding();
+        }
     };
 
     componentWillReceiveProps = (nextProps) => {
         const {active} = nextProps;
 
-        if (active) {
-            this.startFinding();
-        } else {
+        // This is the case when active was inactive and the new props have a true value
+        // Set the state to the new props and fire startFinding
+        if (active && !this.props.active) {
+            this.setState({
+                active,
+            }, () => {
+                this.startFinding();
+            });
+        } else if(!active && this.state.active) {
             this.stopFinding();
         }
     };
 
     startFinding = () => {
+        const {
+            intervalCheck,
+            intervalDelay,
+            scrollCheck,
+        } = this.props;
+
         // Only create one instance of the interval checker
-        if (this.findInterval) {
+        if (this.findInterval && !scrollCheck) {
             return;
         }
-        const {intervalCheck, intervalDelay} = this.props;
 
         if (intervalCheck) {
             this.findInterval = setInterval(this.find, intervalDelay);
             // Call the function for the first time
+            // this.find();
+        } else if (scrollCheck) {
             this.find();
         }
     };
 
     stopFinding = () => {
-        this.findInterval = clearInterval(this.findInterval);
+        const {
+            intervalCheck,
+        } = this.props;
+
+        if (intervalCheck && this.findInterval) {
+            this.findInterval = clearInterval(this.findInterval);
+        }
     };
 
     find = () => {
@@ -87,7 +123,13 @@ class FindWhileScrolling extends Component {
             return;
         }
 
-        const {wrapperEl, peek, minimumTop, onVisibleHandler} = this.props;
+        const {
+            wrapperEl,
+            peek,
+            minimumTop,
+            onVisibleHandler,
+            killAfterFind,
+        } = this.props;
 
         const {top, left, bottom, right} = el.getBoundingClientRect();
 
@@ -100,38 +142,54 @@ class FindWhileScrolling extends Component {
                 top: 0,
                 left: 0,
                 bottom: window.innerHeight || document.documentElement.clientHeight,
-                right: window.innerWidth || document.documentElement.clientWidth
+                right: window.innerWidth || document.documentElement.clientWidth,
             };
         }
 
-        const {top: topWrapper, left: leftWrapper, bottom: bottomWrapper, right: rightWrapper} = wrapperElRect;
+        const {
+            top: topWrapper,
+            left: leftWrapper,
+            bottom: bottomWrapper,
+            right: rightWrapper,
+        } = wrapperElRect;
 
         const whatYouCanSeeRect = {
             top: top >= topWrapper,
             left: left >= leftWrapper,
             bottom: bottom <= bottomWrapper,
-            right: right <= rightWrapper
+            right: right <= rightWrapper,
         };
 
-        let canYouSeeMe = whatYouCanSeeRect.top && whatYouCanSeeRect.left && whatYouCanSeeRect.bottom && whatYouCanSeeRect.right;
+        let canYouSeeMe = whatYouCanSeeRect.top
+            && whatYouCanSeeRect.left
+            && whatYouCanSeeRect.bottom
+            && whatYouCanSeeRect.right;
 
         if (peek) {
-            let peekABoo = rect.top <= bottomWrapper && rect.bottom >= topWrapper && rect.left <= rightWrapper && rect.right >= leftWrapper;
+            let peekABoo = top <= bottomWrapper && bottom >= topWrapper
+                && left <= rightWrapper
+                && right >= leftWrapper;
 
             // If peek is a string then need to find is peeking
             if (typeof peek === 'string') {
-                peekABoo = wrapperElRect[peek];
+                peekABoo = whatYouCanSeeRect[peek];
             }
 
             canYouSeeMe = minimumTop
-                ? peekABoo && rect.top <= (wrapperElRect.bottom - minimumTop)
+                ? peekABoo && top <= (bottomWrapper - minimumTop)
                 : peekABoo;
         }
 
         const {visible} = this.state;
 
         if (visible !== canYouSeeMe) {
-            this.setState({visible: true, visibleDimensions: whatYouCanSeeRect});
+            this.setState({
+                visible: canYouSeeMe,
+                visibleDimensions: whatYouCanSeeRect,
+                active: killAfterFind ? false : this.state.active,
+            }, () => {
+                this.stopFinding();
+            });
 
             if (typeof onVisibleHandler === 'function') {
                 onVisibleHandler(canYouSeeMe, whatYouCanSeeRect);
@@ -140,18 +198,29 @@ class FindWhileScrolling extends Component {
     };
 
     render = () => {
-        const {children, scrollCheck, scrollDebounce: debounce} = this.props;
+        const {
+            children,
+            scrollCheck,
+            className,
+            scrollDebounce: debounce,
+        } = this.props;
+
+        const {
+            active,
+        } = this.state;
 
         const el = React.Children.only(children);
         return (
-            <div ref={r => this.findMe = r} className={'visible-traker'}>
-                {scrollCheck && <AttachHandler target='window' events={{
-                    scroll: this.find,
-                    opts: {
-                        debounce
-                    }
-                }}/>
-}
+            <div ref={r => this.findMe = r} className={cn('visible-traker', className)}>
+                {
+                    scrollCheck && active &&
+                        <AttachHandler target='window' events={{
+                            scroll: this.startFinding,
+                            opts: {
+                                debounce,
+                            },
+                        }}/>
+                }
                 {el}
             </div>
         );
