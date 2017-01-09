@@ -91,6 +91,8 @@ class Tagline extends Component {
         return (
             <FindWhileScrolling
                 active
+                scrollCheck
+                scrollThrottle={250}
                 onVisibleHandler={this.handleVisible}>
                 <article
                     className="mt7 mw7 center ph3 ph5-ns tc br2 pv5 bg-washed-green dark-green mb5">

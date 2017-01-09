@@ -21,6 +21,8 @@ class FindWhileScrolling extends Component {
         ]),
         intervalCheck: PropTypes.bool,
         scrollCheck: PropTypes.bool,
+        scrollThrottle: PropTypes.number,
+        scrollDebounce: PropTypes.number,
         intervalDelay: PropTypes.number,
         wrapperEl: helpers.canUseDom
             ? PropTypes.instanceOf(Element)
@@ -202,6 +204,7 @@ class FindWhileScrolling extends Component {
             scrollCheck,
             className,
             scrollDebounce: debounce,
+            scrollThrottle: throttle,
         } = this.props;
 
         const {
@@ -209,15 +212,27 @@ class FindWhileScrolling extends Component {
         } = this.state;
 
         const el = React.Children.only(children);
+
+        let opts = {};
+        if (throttle) {
+            opts = {
+                throttle: true,
+                throttleDelay: throttle,
+            };
+        } else {
+            opts = {
+                debounce: true,
+                debounceDelay: debounce,
+            };
+        }
+
         return (
             <div ref={r => this.findMe = r} className={cn('visible-traker', className)}>
                 {
                     scrollCheck && active &&
                         <AttachHandler target='window' events={{
                             scroll: this.startFinding,
-                            opts: {
-                                debounce,
-                            },
+                            opts: opts,
                         }}/>
                 }
                 {el}

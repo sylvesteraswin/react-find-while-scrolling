@@ -270,17 +270,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	                children = _this$props3.children,
 	                scrollCheck = _this$props3.scrollCheck,
 	                className = _this$props3.className,
-	                debounce = _this$props3.scrollDebounce;
+	                debounce = _this$props3.scrollDebounce,
+	                throttle = _this$props3.scrollThrottle;
 	            var active = _this.state.active;
 
 	            var el = _react2.default.Children.only(children);
+
+	            var opts = {};
+	            if (throttle) {
+	                opts = {
+	                    throttle: true,
+	                    throttleDelay: throttle
+	                };
+	            } else {
+	                opts = {
+	                    debounce: true,
+	                    debounceDelay: debounce
+	                };
+	            }
+
 	            return _react2.default.createElement('div', { ref: function ref(r) {
 	                    return _this.findMe = r;
 	                }, className: (0, _classnames2.default)('visible-traker', className) }, scrollCheck && active && _react2.default.createElement(_reactAttachHandler2.default, { target: 'window', events: {
 	                    scroll: _this.startFinding,
-	                    opts: {
-	                        debounce: debounce
-	                    }
+	                    opts: opts
 	                } }), el);
 	        }, _temp), _possibleConstructorReturn(_this, _ret);
 	    }
@@ -294,6 +307,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    peek: _react.PropTypes.oneOfType([_react.PropTypes.bool, _react.PropTypes.oneOf(['top', 'right', 'bottom', 'left'])]),
 	    intervalCheck: _react.PropTypes.bool,
 	    scrollCheck: _react.PropTypes.bool,
+	    scrollThrottle: _react.PropTypes.number,
+	    scrollDebounce: _react.PropTypes.number,
 	    intervalDelay: _react.PropTypes.number,
 	    wrapperEl: helpers.canUseDom ? _react.PropTypes.instanceOf(Element) : _react.PropTypes.any,
 	    children: _react.PropTypes.element,
@@ -511,7 +526,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		    capture: false,
 		    passive: false,
 		    debounce: false,
-		    debounceDelay: 250
+		    throttle: false,
+		    debounceDelay: 250,
+		    throttleDelay: 250
 		};
 
 		var addEventListener = helpers.addEventListener,
@@ -542,6 +559,60 @@ return /******/ (function(modules) { // webpackBootstrap
 		        }, delay);
 		    };
 		};
+		// Inspired from underscore throttle https://github.com/jashkenas/underscore/blob/master/underscore.js
+		var throttleFn = function throttleFn(cb, delay) {
+		    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+		    var context = void 0;
+		    var args = void 0;
+		    var result = void 0;
+
+		    var timeout = null;
+		    var previous = 0;
+
+		    var _options$leading = options.leading,
+		        leading = _options$leading === undefined ? true : _options$leading,
+		        _options$trailing = options.trailing,
+		        trailing = _options$trailing === undefined ? false : _options$trailing;
+
+		    var later = function later() {
+		        previous = !leading ? 0 : Date.now();
+		        timeout = null;
+		        result = cb.apply(context, args);
+		        if (!timeout) {
+		            context = args = null;
+		        }
+		    };
+
+		    return function () {
+		        context = this;
+		        args = arguments;
+
+		        var now = Date.now();
+		        if (!previous && !leading) {
+		            previous = now;
+		        }
+
+		        var remaining = wait - (now - previous);
+
+		        if (remaining <= 0 || remaining > wait) {
+		            if (timeout) {
+		                clearTimeout(timeout);
+		                timeout = null;
+		            }
+
+		            previous = now;
+		            result = cb.apply(context, args);
+
+		            if (!timeout) {
+		                context = args = null;
+		            }
+		        } else if (!timeout && trailing) {
+		            timeout = setTimeout(later, remaining);
+		        }
+		        return result;
+		    };
+		};
 
 		var switchOn = function switchOn(target, eventName, cb) {
 		    var opts = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
@@ -550,10 +621,20 @@ return /******/ (function(modules) { // webpackBootstrap
 		    if (addEventListener) {
 		        var _opts$debounce = opts.debounce,
 		            debounce = _opts$debounce === undefined ? false : _opts$debounce,
-		            debounceDelay = opts.debounceDelay;
-		        // http://stackoverflow.com/questions/2891096/addeventlistener-using-apply
+		            _opts$throttle = opts.throttle,
+		            throttle = _opts$throttle === undefined ? false : _opts$throttle,
+		            debounceDelay = opts.debounceDelay,
+		            throttleDelay = opts.throttleDelay;
 
-		        target.addEventListener.apply(target, getEventsArgs(eventName, debounce ? debounceFn(cb, debounceDelay) : cb, opts));
+		        var handler = cb;
+		        if (debounce) {
+		            handler = debounceFn(cb, debounceDelay);
+		        } else if (throttle) {
+		            handler = throttleFn(cb, throttleDelay);
+		        }
+
+		        // http://stackoverflow.com/questions/2891096/addeventlistener-using-apply
+		        target.addEventListener.apply(target, getEventsArgs(eventName, handler, opts));
 		    }
 		};
 
