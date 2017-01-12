@@ -1,7 +1,7 @@
 {
   "name": "react-find-while-scrolling",
   "moduleName": "FindWhileScrolling",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React component to detect if the element is in the viewport while scrolling.",
   "main": "build/react-find-while-scrolling",
   "browser": "build/react-find-while-scrolling",
@@ -112,6 +112,6 @@
   "precommit": [],
   "dependencies": {
     "classnames": "^2.2.5",
-    "react-attach-handler": "^0.1.2"
+    "react-attach-handler": "^0.1.3"
   }
 }
