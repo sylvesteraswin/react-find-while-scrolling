@@ -189,7 +189,9 @@ class FindWhileScrolling extends Component {
                 visibleDimensions: whatYouCanSeeRect,
                 active: killAfterFind ? false : this.state.active,
             }, () => {
-                this.stopFinding();
+                if (killAfterFind) {
+                    this.stopFinding();
+                }
             });
 
             if (typeof onVisibleHandler === 'function') {

@@ -1,7 +1,7 @@
 {
   "name": "react-find-while-scrolling",
   "moduleName": "FindWhileScrolling",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "React component to detect if the element is in the viewport while scrolling.",
   "main": "build/react-find-while-scrolling",
   "browser": "build/react-find-while-scrolling",
