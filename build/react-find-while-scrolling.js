@@ -258,7 +258,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    visibleDimensions: whatYouCanSeeRect,
 	                    active: killAfterFind ? false : _this.state.active
 	                }, function () {
-	                    _this.stopFinding();
+	                    if (killAfterFind) {
+	                        _this.stopFinding();
+	                    }
 	                });
 
 	                if (typeof onVisibleHandler === 'function') {

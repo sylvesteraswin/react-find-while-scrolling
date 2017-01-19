@@ -143,7 +143,8 @@ class Title extends Component {
         return (
             <FindWhileScrolling
                 active
-                onVisibleHandler={this.handleVisible}>
+                onVisibleHandler={this.handleVisible}
+                killAfterFind={false}>
                 <article
                     className="pa3 pa5-ns mt7">
                     <h1
